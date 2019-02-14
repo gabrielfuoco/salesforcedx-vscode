@@ -6,7 +6,6 @@
  */
 
 import * as vscode from 'vscode';
-import { ConfigurationTarget } from 'vscode';
 import { channelService } from './channels';
 import {
   CompositeParametersGatherer,
@@ -63,11 +62,6 @@ import {
 import { initSObjectDefinitions } from './commands/forceGenerateFauxClasses';
 import { getUserId } from './commands/forceStartApexDebugLogging';
 import { isvDebugBootstrap } from './commands/isvdebugging/bootstrapCmd';
-import {
-  CLIENT_ID,
-  SFDX_CLIENT_ENV_VAR,
-  TERMINAL_INTEGRATED_ENVS
-} from './constants';
 import {
   registerDefaultUsernameWatcher,
   setupWorkspaceOrgType
@@ -394,7 +388,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Context
   let sfdxProjectOpened = false;
-  if (vscode.workspace.rootPath) {
+  if (vscode.workspace.workspaceFolders![0]) {
     const files = await vscode.workspace.findFiles('**/sfdx-project.json');
     sfdxProjectOpened = files && files.length > 0;
   }
@@ -412,16 +406,6 @@ export async function activate(context: vscode.ExtensionContext) {
     'sfdx:replay_debugger_extension',
     replayDebuggerExtensionInstalled
   );
-
-  // Set environment variable to add logging for VSCode API calls
-  process.env[SFDX_CLIENT_ENV_VAR] = CLIENT_ID;
-  const config = vscode.workspace.getConfiguration();
-
-  TERMINAL_INTEGRATED_ENVS.forEach(env => {
-    const section: { [k: string]: any } = config.get(env)!;
-    section[SFDX_CLIENT_ENV_VAR] = CLIENT_ID;
-    config.update(env, section, ConfigurationTarget.Workspace);
-  });
 
   vscode.commands.executeCommand(
     'setContext',
@@ -449,13 +433,13 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(treeDataProvider);
 
   // Scratch Org Decorator
-  if (vscode.workspace.rootPath) {
+  if (vscode.workspace.workspaceFolders![0]) {
     decorators.showOrg();
     decorators.monitorOrgConfigChanges();
   }
 
   // Demo mode Decorator
-  if (vscode.workspace.rootPath && isDemoMode()) {
+  if (vscode.workspace.workspaceFolders![0] && isDemoMode()) {
     decorators.showDemoMode();
   }
 
